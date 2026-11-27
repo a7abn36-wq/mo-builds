@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة المهام</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --line: #e5e7eb;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Tahoma, Arial, sans-serif;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 12px 35px rgba(31, 41, 55, 0.1);
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 26px;
+    }
+
+    .hint {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    form {
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font: inherit;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .add-btn {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 20px;
+      font-weight: bold;
+    }
+
+    .add-btn:hover { background: var(--primary-dark); }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .filter {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter button {
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+    }
+
+    .filter button.active {
+      background: #eef2ff;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .clear-btn {
+      background: transparent;
+      color: var(--danger);
+      padding: 6px;
+      white-space: nowrap;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 4px;
+      border-top: 1px solid var(--line);
+    }
+
+    li input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex: none;
+    }
+
+    .title {
+      flex: 1;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    li.done .title {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+
+    .delete-btn {
+      background: transparent;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 8px;
+    }
+
+    .delete-btn:hover { color: var(--danger); }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px 0 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 10px; }
+      .app { padding: 20px 16px; border-radius: 14px; }
+      h1 { font-size: 22px; }
+      .add-btn { padding: 0 14px; }
+      .toolbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>قائمة المهام</h1>
+    <p class="hint">أضف مهامك اليومية، وحدد ما تم إنجازه منها.</p>
+
+    <form id="task-form">
+      <input id="task-input" type="text" placeholder="مهمة جديدة..." autocomplete="off" aria-label="اسم المهمة" required>
+      <button class="add-btn" type="submit">إضافة</button>
+    </form>
+
+    <div class="toolbar">
+      <div class="filter" id="filter">
+        <button type="button" data-filter="all" class="active">الكل</button>
+        <button type="button" data-filter="active">المتبقية</button>
+        <button type="button" data-filter="done">المنجزة</button>
+      </div>
+      <span id="counter"></span>
+      <button type="button" class="clear-btn" id="clear-done">حذف المنجزة</button>
+    </div>
+
+    <ul id="list"></ul>
+  </main>
+
+  <script>
+    const form = document.getElementById('task-form');
+    const input = document.getElementById('task-input');
+    const list = document.getElementById('list');
+    const counter = document.getElementById('counter');
+    const filterBox = document.getElementById('filter');
+    const clearDone = document.getElementById('clear-done');
+
+    let tasks = [];
+    let currentFilter = 'all';
+
+    try {
+      tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    } catch (e) {
+      tasks = [];
+    }
+
+    function save() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function render() {
+      const visible = tasks.filter(task => {
+        if (currentFilter === 'active') return !task.done;
+        if (currentFilter === 'done') return task.done;
+        return true;
+      });
+
+      list.innerHTML = '';
+
+      if (!visible.length) {
+        const li = document.createElement('li');
+        li.className = 'empty';
+        li.textContent = tasks.length ? 'لا توجد مهام في هذا العرض.' : 'لا توجد مهام بعد، أضف أول مهمة!';
+        list.appendChild(li);
+      }
+
+      visible.forEach(task => {
+        const li = document.createElement('li');
+        if (task.done) li.className = 'done';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.done;
+        checkbox.setAttribute('aria-label', 'تحديد المهمة كمنجزة');
+        checkbox.addEventListener('change', () => {
+          task.done = checkbox.checked;
+          save();
+          render();
+        });
+
+        const title = document.createElement('span');
+        title.className = 'title';
+        title.textContent = task.text;
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'delete-btn';
+        del.textContent = '×';
+        del.setAttribute('aria-label', 'حذف المهمة');
+        del.addEventListener('click', () => {
+          tasks = tasks.filter(item => item.id !== task.id);
+          save();
+          render();
+        });
+
+        li.append(checkbox, title, del);
+        list.appendChild(li);
+      });
+
+      const remaining = tasks.filter(task => !task.done).length;
+      counter.textContent = `المتبقي: ${remaining} من ${tasks.length}`;
+    }
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.push({ id: Date.now() + Math.random(), text, done: false });
+      input.value = '';
+      save();
+      render();
+      input.focus();
+    });
+
+    filterBox.addEventListener('click', event => {
+      const button = event.target.closest('button[data-filter]');
+      if (!button) return;
+      currentFilter = button.dataset.filter;
+      filterBox.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      render();
+    });
+
+    clearDone.addEventListener('click', () => {
+      tasks = tasks.filter(task => !task.done);
+      save();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
