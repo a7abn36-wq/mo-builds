@@ -35,7 +35,11 @@ jobs:
           [[ "$ID" =~ ^[0-9a-f]{24}$ ]] || { echo bad id; exit 1; }
           mkdir -p "builds/$ID" && cd "builds/$ID"
           git init -q . 2>/dev/null || true
-          timeout 1200 opencode run -m "opencode/$MODEL" "Build a small static website or app in the current directory. Requirements: create index.html as the entry point (other static files like css/js are fine), self-contained, no server, no API keys, no secrets, responsive. When finished, reply with one short sentence describing what you built. Request: $PROMPT" || true
+          for M in "$MODEL" deepseek-v4.1-flash-free glm-5.3-flash-free mimo-v2.6-flash-free big-pickle; do
+            echo "trying $M"
+            timeout 900 opencode run -m "opencode/$M" "Build a small static website or app in the current directory. Requirements: create index.html as the entry point (other static files like css/js are fine), self-contained, no server, no API keys, no secrets, responsive. When finished, reply with one short sentence describing what you built. Request: $PROMPT" || true
+            [ -f index.html ] && break
+          done
           rm -rf .git
           test -f index.html
       - name: Publish
