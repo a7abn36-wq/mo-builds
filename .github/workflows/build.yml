@@ -1,0 +1,60 @@
+name: build
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: build id
+        required: true
+      prompt:
+        description: what to build
+        required: true
+      model:
+        description: opencode free model
+        required: false
+        default: deepseek-v4.1-flash-free
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ID: ${{ inputs.id }}
+      PROMPT: ${{ inputs.prompt }}
+      MODEL: ${{ inputs.model }}
+      OK: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install OpenCode
+        run: npm i -g opencode-ai
+      - name: Generate
+        run: |
+          [[ "$ID" =~ ^[0-9a-f]{24}$ ]] || { echo bad id; exit 1; }
+          mkdir -p "builds/$ID" && cd "builds/$ID"
+          git init -q . 2>/dev/null || true
+          timeout 1200 opencode run -m "opencode/$MODEL" "Build a small static website or app in the current directory. Requirements: create index.html as the entry point (other static files like css/js are fine), self-contained, no server, no API keys, no secrets, responsive. When finished, reply with one short sentence describing what you built. Request: $PROMPT" || true
+          rm -rf .git
+          test -f index.html
+      - name: Publish
+        run: |
+          git config user.name "mo-builds-bot"
+          git config user.email "mo-builds-bot@users.noreply.github.com"
+          git add "builds/$ID"
+          git commit -m "build $ID"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && break; sleep 3; done
+          echo "OK=1" >> "$GITHUB_ENV"
+      - name: Wait for Pages
+        run: |
+          for i in $(seq 1 40); do
+            c=$(curl -s -o /dev/null -w "%{http_code}" "https://a7abn36-wq.github.io/mo-builds/builds/$ID/")
+            [ "$c" = "200" ] && exit 0
+            sleep 8
+          done
+          exit 1
+      - name: Notify bot
+        if: always()
+        run: |
+          curl -s -m 20 -X POST "https://mo-agent.me6234946.workers.dev/gh-done" -H "content-type: application/json" -d "{\"id\":\"$ID\",\"ok\":\"$OK\",\"job\":\"$GITHUB_RUN_ID\"}" || true
