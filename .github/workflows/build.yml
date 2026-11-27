@@ -9,19 +9,24 @@ on:
         description: what to build
         required: true
       model:
-        description: opencode free model
+        description: preferred opencode free model (optional)
         required: false
-        default: deepseek-v4.1-flash-free
+        default: ""
+      base:
+        description: previous build id to continue from (optional)
+        required: false
+        default: ""
 permissions:
   contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     env:
       ID: ${{ inputs.id }}
       PROMPT: ${{ inputs.prompt }}
       MODEL: ${{ inputs.model }}
+      BASE: ${{ inputs.base }}
       OK: "0"
     steps:
       - uses: actions/checkout@v4
@@ -33,13 +38,24 @@ jobs:
       - name: Generate
         run: |
           [[ "$ID" =~ ^[0-9a-f]{24}$ ]] || { echo bad id; exit 1; }
-          mkdir -p "builds/$ID" && cd "builds/$ID"
-          git init -q . 2>/dev/null || true
-          for M in "$MODEL" deepseek-v4.1-flash-free glm-5.3-flash-free mimo-v2.6-flash-free big-pickle; do
+          mkdir -p "builds/$ID"
+          PRE=""
+          if [[ "$BASE" =~ ^[0-9a-f]{24}$ ]] && [ -d "builds/$BASE" ]; then
+            cp -r "builds/$BASE/." "builds/$ID/"
+            PRE="The directory already contains the previous version of this project. Modify it according to the request, keeping everything that works. "
+          fi
+          cd "builds/$ID"
+          H0=$(cat index.html 2>/dev/null | md5sum)
+          # discover the CURRENT free models at run time
+          opencode models 2>/dev/null | grep -E '^opencode/.*(-free|big-pickle)$' | sed 's#^opencode/##' > /tmp/free.txt || true
+          echo "free models now: $(tr '\n' ' ' < /tmp/free.txt)"
+          { [ -n "$MODEL" ] && echo "$MODEL"; grep -x -e 'deepseek-v4.1-flash-free' -e 'big-pickle' /tmp/free.txt; grep -v -x -e 'deepseek-v4.1-flash-free' -e 'big-pickle' /tmp/free.txt; } | awk '!s[$0]++' | head -6 > /tmp/order.txt
+          [ -s /tmp/order.txt ] || echo big-pickle > /tmp/order.txt
+          while read -r M; do
             echo "trying $M"
-            timeout 900 opencode run -m "opencode/$M" "Build a small static website or app in the current directory. Requirements: create index.html as the entry point (other static files like css/js are fine), self-contained, no server, no API keys, no secrets, responsive. When finished, reply with one short sentence describing what you built. Request: $PROMPT" || true
-            [ -f index.html ] && break
-          done
+            timeout 360 opencode run -m "opencode/$M" "Build a small static website or app in the current directory. Requirements: create index.html as the entry point (other static files like css/js are fine), self-contained, no server, no API keys, no secrets, responsive. When finished, reply with one short sentence describing what you built. ${PRE}$PROMPT" || true
+            [ -f index.html ] && [ "$(md5sum < index.html)" != "$H0" ] && { echo "done with $M"; break; }
+          done < /tmp/order.txt
           rm -rf .git
           test -f index.html
       - name: Publish
