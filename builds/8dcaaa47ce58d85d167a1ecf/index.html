@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مِعيار — تتبّع سعر الذهب اليوم</title>
+  <meta name="description" content="صفحة توضيحية لتتبّع أسعار الذهب بالأعيرة المختلفة. جميع الأرقام المعروضة تجريبية وليست أسعاراً فعلية.">
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem('miyaar-theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+          document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+      } catch (error) {
+        return;
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #0b1b16;
+      --ink-soft: #122720;
+      --ink-lift: #18332a;
+      --gold: #e8c878;
+      --gold-deep: #bc9139;
+      --gold-hover: #f5dc9a;
+      --parchment: #f3ecdd;
+      --muted: #a4b7ab;
+      --copper: #d08a63;
+      --line: rgba(232, 200, 120, 0.22);
+      --line-soft: rgba(232, 200, 120, 0.1);
+      --wash: rgba(232, 200, 120, 0.09);
+      --wash-soft: rgba(232, 200, 120, 0.05);
+      --glow: rgba(188, 145, 57, 0.12);
+      --head-bg: rgba(11, 27, 22, 0.86);
+      --placeholder: #7f9188;
+      --chart-ring: #0b1b16;
+      --font: 'Cairo', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+      --ink: #f2f5ef;
+      --ink-soft: #e8eee5;
+      --ink-lift: #dfe8dd;
+      --gold: #83631d;
+      --gold-deep: #967121;
+      --gold-hover: #684e16;
+      --parchment: #10261f;
+      --muted: #5d7167;
+      --copper: #b46443;
+      --line: rgba(16, 38, 31, 0.18);
+      --line-soft: rgba(16, 38, 31, 0.09);
+      --wash: rgba(131, 99, 29, 0.09);
+      --wash-soft: rgba(131, 99, 29, 0.05);
+      --glow: rgba(131, 99, 29, 0.1);
+      --head-bg: rgba(242, 245, 239, 0.9);
+      --placeholder: #71847a;
+      --chart-ring: #f2f5ef;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--ink);
+      color: var(--parchment);
+      font-family: var(--font);
+      font-weight: 400;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+      background-image:
+        repeating-linear-gradient(90deg, transparent 0 79px, var(--line-soft) 79px 80px),
+        radial-gradient(circle at 78% 8%, var(--glow), transparent 46%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+
+    .wrap {
+      width: min(1180px, calc(100% - 48px));
+      margin-inline: auto;
+    }
+
+    .skip {
+      position: absolute;
+      inset-inline-start: -999px;
+      top: 8px;
+      background: var(--gold);
+      color: var(--ink);
+      padding: 8px 14px;
+      border-radius: 4px;
+      z-index: 10;
+    }
+    .skip:focus { inset-inline-start: 12px; }
+
+    /* Header */
+    .site-head {
+      border-bottom: 1px solid var(--line);
+      background: var(--head-bg);
+    }
+    .head-inner {
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { display: inline-flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 34px; height: 34px; flex: none; color: var(--gold); }
+    .brand-name { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 34px; font-size: 0.95rem; color: var(--muted); }
+    .nav-links a { transition: color 0.2s ease; }
+    .nav-links a:hover { color: var(--gold); }
+    .head-cta {
+      border: 1px solid var(--gold-deep);
+      color: var(--gold);
+      padding: 10px 20px;
+      border-radius: 2px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      background: transparent;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .head-cta:hover { background: var(--gold); color: var(--ink); }
+    .head-actions { display: flex; align-items: center; gap: 12px; }
+    .theme-toggle {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      flex: none;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      background: transparent;
+      color: var(--gold);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .theme-toggle:hover { background: var(--wash); border-color: var(--gold); }
+    .theme-icon { width: 19px; height: 19px; }
+    .theme-icon-sun { display: none; }
+    html[data-theme="light"] .theme-icon-moon { display: none; }
+    html[data-theme="light"] .theme-icon-sun { display: block; }
+
+    /* Ticker */
+    .ticker { border-bottom: 1px solid var(--line); background: var(--ink-soft); }
+    .ticker-inner {
+      display: flex;
+      align-items: stretch;
+      overflow-x: auto;
+      scrollbar-width: none;
+      min-height: 54px;
+    }
+    .ticker-inner::-webkit-scrollbar { display: none; }
+    .tick {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+      padding: 0 28px;
+      border-inline-end: 1px solid var(--line);
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .tick:first-child { padding-inline-start: 0; }
+    .tick strong { color: var(--parchment); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tick .up { color: var(--gold); }
+    .tick .down { color: var(--copper); }
+
+    /* Hero */
+    .hero { padding: 78px 0 92px; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.85fr);
+      gap: clamp(32px, 6vw, 88px);
+      align-items: start;
+    }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .kicker::before { content: ''; width: 26px; height: 1px; background: currentColor; }
+    h1 {
+      font-size: clamp(2.6rem, 5.4vw, 4.6rem);
+      line-height: 1.16;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      margin: 20px 0 14px;
+    }
+    .intro {
+      max-width: 46ch;
+      color: var(--muted);
+      font-size: 1.02rem;
+      margin: 0 0 44px;
+    }
+    .price-card {
+      border-top: 1px solid var(--gold-deep);
+      border-bottom: 1px solid var(--line);
+      padding: 26px 0 22px;
+    }
+    .price-label {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .price-label .karat-name { color: var(--gold); font-weight: 700; }
+    .price-line { display: flex; align-items: baseline; gap: 16px; margin-top: 4px; }
+    .price-value {
+      font-size: clamp(3.3rem, 8.6vw, 6.6rem);
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: -0.055em;
+      font-variant-numeric: tabular-nums;
+      color: var(--parchment);
+    }
+    .price-unit { font-size: 1.15rem; font-weight: 600; color: var(--gold); }
+    .price-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+    .change {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--wash);
+      border: 1px solid var(--line);
+      color: var(--gold);
+      padding: 5px 12px;
+      border-radius: 2px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .change.down { color: var(--copper); }
+    .stamp-note { font-size: 0.8rem; color: var(--muted); }
+
+    .chart { margin-top: 30px; }
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .chart svg { display: block; width: 100%; height: 150px; overflow: visible; }
+    #chart-line { stroke: var(--gold); }
+    #chart-dot { fill: var(--gold); stroke: var(--chart-ring); }
+    #chart-fill stop { stop-color: var(--gold); }
+    .chart-axis {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      color: var(--muted);
+      border-top: 1px solid var(--line-soft);
+      padding-top: 8px;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-top: 36px; }
+    .btn-main {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--ink);
+      border: 1px solid var(--gold);
+      border-radius: 2px;
+      padding: 14px 28px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .btn-main:hover { background: var(--gold-hover); transform: translateY(-2px); }
+    .quiet-link { color: var(--muted); font-size: 0.88rem; border-bottom: 1px solid var(--gold-deep); padding-bottom: 3px; }
+    .quiet-link:hover { color: var(--gold); }
+
+    /* Ledger */
+    .ledger {
+      background: var(--ink-soft);
+      border: 1px solid var(--line);
+      padding: 30px 28px 26px;
+      position: relative;
+    }
+    .ledger::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      inset-inline-start: -1px;
+      width: 58px;
+      height: 3px;
+      background: var(--gold);
+    }
+    .ledger-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .ledger h2 { margin: 0; font-size: 1.3rem; font-weight: 800; }
+    .ledger-sub { display: block; font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .seal { width: 62px; height: 62px; flex: none; color: var(--gold-deep); }
+    .seal text { font-family: var(--font); font-size: 11px; font-weight: 700; fill: currentColor; }
+    .ledger-cols {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.74rem;
+      border-bottom: 1px solid var(--line);
+      padding: 18px 0 8px;
+    }
+    .karat-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 12px;
+      text-align: start;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--line-soft);
+      color: var(--parchment);
+      padding: 13px 10px 13px 0;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .karat-row:hover { background: var(--wash-soft); }
+    .karat-row[aria-pressed="true"] {
+      background: var(--wash);
+      border-inline-end: 2px solid var(--gold);
+      padding-inline-end: 8px;
+    }
+    .karat-row .k-name { font-weight: 700; font-size: 0.96rem; }
+    .karat-row .k-name small { display: block; color: var(--muted); font-weight: 400; font-size: 0.72rem; }
+    .karat-row .k-price { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+    .karat-row .k-change { color: var(--gold); font-size: 0.78rem; font-variant-numeric: tabular-nums; min-width: 62px; text-align: end; }
+    .ledger-foot {
+      margin-top: 20px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* Features */
+    .features { border-top: 1px solid var(--line); padding: 84px 0 88px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-bottom: 44px;
+    }
+    .section-head h2 { margin: 12px 0 0; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.3; font-weight: 800; letter-spacing: -0.03em; }
+    .section-head p { margin: 0; max-width: 42ch; color: var(--muted); font-size: 0.94rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+    .feature {
+      padding: 0 32px;
+      border-inline-start: 1px solid var(--line);
+    }
+    .feature:first-child { border-inline-start: 0; padding-inline-start: 0; }
+    .feature-icon { color: var(--gold); width: 30px; height: 30px; margin-bottom: 20px; }
+    .feature h3 { margin: 0 0 8px; font-size: 1.1rem; font-weight: 700; }
+    .feature p { margin: 0; color: var(--muted); font-size: 0.89rem; max-width: 30ch; }
+
+    /* Alerts */
+    .alerts { padding: 0 0 96px; }
+    .alert-panel {
+      border: 1px solid var(--gold-deep);
+      background: var(--ink-lift);
+      padding: clamp(28px, 5vw, 56px);
+      display: grid;
+      grid-template-columns: 1fr minmax(280px, 0.8fr);
+      gap: 40px;
+      align-items: center;
+    }
+    .alert-panel h2 { margin: 12px 0 10px; font-size: clamp(1.7rem, 3vw, 2.4rem); line-height: 1.35; font-weight: 800; letter-spacing: -0.025em; }
+    .alert-panel p { margin: 0; color: var(--muted); font-size: 0.92rem; max-width: 44ch; }
+    .alert-form { display: flex; gap: 10px; flex-wrap: wrap; }
+    .alert-form input {
+      flex: 1 1 180px;
+      min-width: 0;
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      color: var(--parchment);
+      padding: 13px 15px;
+      font-size: 0.92rem;
+    }
+    .alert-form input::placeholder { color: var(--placeholder); }
+    .alert-form button {
+      background: var(--gold);
+      color: var(--ink);
+      border: 1px solid var(--gold);
+      border-radius: 2px;
+      padding: 13px 22px;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+    .form-note { min-height: 24px; margin-top: 12px; font-size: 0.8rem; color: var(--gold); }
+
+    /* Footer */
+    .site-foot { border-top: 1px solid var(--line); padding: 26px 0 40px; }
+    .foot-inner { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: center; font-size: 0.8rem; color: var(--muted); }
+    .foot-brand { color: var(--gold); font-weight: 800; font-size: 1rem; }
+
+    /* One orchestrated entrance */
+    .intro, .hero-grid .ledger, .price-card { animation: settle 0.75s cubic-bezier(.2,.7,.3,1) both; }
+    .price-card { animation-delay: 0.1s; }
+    .hero-grid .ledger { animation-delay: 0.2s; }
+    @keyframes settle {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .feature-grid { grid-template-columns: 1fr; gap: 28px; }
+      .feature { border-inline-start: 0; padding: 0 0 24px; border-bottom: 1px solid var(--line); }
+      .feature:last-child { border-bottom: 0; padding-bottom: 0; }
+      .alert-panel { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .wrap { width: min(100% - 32px, 1180px); }
+      .head-inner { min-height: 68px; }
+      .head-actions { gap: 8px; }
+      .theme-toggle { width: 36px; height: 36px; }
+      .head-cta { padding: 8px 14px; font-size: 0.82rem; }
+      .brand-name { font-size: 1.15rem; }
+      .hero { padding: 52px 0 64px; }
+      .intro { margin-bottom: 32px; }
+      .price-line { gap: 10px; }
+      .price-unit { font-size: 0.95rem; }
+      .ledger { padding: 24px 18px 20px; }
+      .karat-row { gap: 6px; }
+      .karat-row .k-price { font-size: 0.85rem; }
+      .karat-row .k-change { min-width: 52px; font-size: 0.72rem; }
+      .features { padding: 64px 0; }
+      .alerts { padding-bottom: 64px; }
+      .chart svg { height: 110px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
+
+  <header class="site-head">
+    <div class="wrap head-inner">
+      <a class="brand" href="#main" aria-label="مِعيار، الصفحة الرئيسية">
+        <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M20 2 38 20 20 38 2 20 20 2Z" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M11 20h18M15 14h10M15 26h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-name">مِعيار</span>
+      </a>
+      <nav class="nav-links" aria-label="روابط الصفحة">
+        <a href="#main">السعر اليوم</a>
+        <a href="#karats">الأعيرة</a>
+        <a href="#why">لماذا مِعيار</a>
+      </nav>
+      <div class="head-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="الوضع الفاتح" aria-pressed="false" title="الوضع الفاتح">
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <a class="head-cta" href="#alerts">تتبّع السعر</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="ticker" aria-label="أسعار توضيحية">
+    <div class="wrap ticker-inner">
+      <div class="tick">ذهب عالمي <strong>٢٬٦٨٤٫٠٠ $</strong> <span class="up">▲ ٠٫٤٢٪</span></div>
+      <div class="tick">فضة <strong>٣١٫٤٠ $</strong> <span class="down">▼ ٠٫١٨٪</span></div>
+      <div class="tick">سعر الصرف <strong>٤٨٫٦٠ ج.م</strong></div>
+      <div class="tick">آخر تحديث تجريبي <strong>١١:٤٥ ص</strong></div>
+    </div>
+  </div>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <span class="kicker">تتبّع يومي · أرقام توضيحية</span>
+          <h1 id="hero-title">سعر الذهب<br>كما يهمّك</h1>
+          <p class="intro">اختر العيار لتعرض السعر التقديري للغرام، وتابع حركته خلال الأسبوع في مكان واحد.</p>
+
+          <div class="price-card">
+            <div class="price-label">
+              <span class="karat-name" id="active-karat">عيار ٢١ · سعر الغرام</span>
+              <span>بالجنيه المصري</span>
+            </div>
+            <div class="price-line">
+              <span class="price-value" id="price-value">٤٬٧٤٢٫٥٠</span>
+              <span class="price-unit">ج.م</span>
+            </div>
+            <div class="price-meta">
+              <span class="change" id="price-change">▲ ٣٨٫٥٠ · ٠٫٨٢٪</span>
+              <span class="stamp-note">مقارنة بيوم أمس · قيمة تجريبية</span>
+            </div>
+          </div>
+
+          <div class="chart">
+            <div class="chart-head">
+              <span>حركة السعر خلال ٧ أيام</span>
+              <span>رسم توضيحي</span>
+            </div>
+            <svg viewBox="0 0 600 150" role="img" aria-labelledby="chart-title">
+              <title id="chart-title">رسم توضيحي لارتفاع سعر العيار المختار خلال سبعة أيام</title>
+              <defs>
+                <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#e8c878" stop-opacity="0.26"/>
+                  <stop offset="100%" stop-color="#e8c878" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path id="chart-area" fill="url(#chart-fill)" d=""></path>
+              <path id="chart-line" fill="none" stroke="#e8c878" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" d=""></path>
+              <circle id="chart-dot" r="5" fill="#e8c878" stroke="#0b1b16" stroke-width="3"></circle>
+            </svg>
+            <div class="chart-axis"><span>الأحد</span><span>الثلاثاء</span><span>الجمعة</span></div>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn-main" href="#alerts">فعّل تنبيه السعر</a>
+            <a class="quiet-link" href="#karats">قارن بين الأعيرة</a>
+          </div>
+        </div>
+
+        <aside class="ledger" id="karats" aria-labelledby="ledger-title">
+          <div class="ledger-head">
+            <div>
+              <h2 id="ledger-title">دفتر الأعيرة</h2>
+              <span class="ledger-sub">سعر الغرام · أرقام توضيحية</span>
+            </div>
+            <svg class="seal" viewBox="0 0 80 80" aria-hidden="true">
+              <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" stroke-width="1"/>
+              <circle cx="40" cy="40" r="30" fill="none" stroke="currentColor" stroke-width="0.6"/>
+              <path d="M40 10v8M40 62v8M10 40h8M62 40h8" stroke="currentColor" stroke-width="1"/>
+              <text x="40" y="34" text-anchor="middle">وزن</text>
+              <text x="40" y="52" text-anchor="middle">وعيار</text>
+            </svg>
+          </div>
+          <div class="ledger-cols"><span>العيار</span><span>السعر</span><span>التغيّر</span></div>
+          <div id="karat-list">
+            <button class="karat-row" type="button" data-karat="24" data-label="٢٤" data-price="٥٬٤٢٠٫٠٠" data-change="▲ ٤٦٫٠٠ · ٠٫٨٦٪" aria-pressed="false">
+              <span class="k-name">عيار ٢٤<small>ذهب خالص</small></span><span class="k-price">٥٬٤٢٠٫٠٠</span><span class="k-change">▲ ٠٫٨٦٪</span>
+            </button>
+            <button class="karat-row" type="button" data-karat="21" data-label="٢١" data-price="٤٬٧٤٢٫٥٠" data-change="▲ ٣٨٫٥٠ · ٠٫٨٢٪" aria-pressed="true">
+              <span class="k-name">عيار ٢١<small>الأكثر تداولاً</small></span><span class="k-price">٤٬٧٤٢٫٥٠</span><span class="k-change">▲ ٠٫٨٢٪</span>
+            </button>
+            <button class="karat-row" type="button" data-karat="18" data-label="١٨" data-price="٤٬٠٦٥٫٠٠" data-change="▲ ٣٣٫٠٠ · ٠٫٨٢٪" aria-pressed="false">
+              <span class="k-name">عيار ١٨<small>مشغولات</small></span><span class="k-price">٤٬٠٦٥٫٠٠</span><span class="k-change">▲ ٠٫٨٢٪</span>
+            </button>
+            <button class="karat-row" type="button" data-karat="14" data-label="١٤" data-price="٣٬١٦٢٫٠٠" data-change="▲ ٢٥٫٥٠ · ٠٫٨١٪" aria-pressed="false">
+              <span class="k-name">عيار ١٤<small>خفيف الوزن</small></span><span class="k-price">٣٬١٦٢٫٠٠</span><span class="k-change">▲ ٠٫٨١٪</span>
+            </button>
+          </div>
+          <p class="ledger-foot">اضغط على أي عيار لعرض قيمته في البطاقة. الأسعار ومعدلات التغيير أمثلة للمعاينة فقط، ولا تمثل تسعيراً حقيقياً.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="features" id="why" aria-labelledby="why-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="kicker">ما الذي يهمّك</span>
+            <h2 id="why-title">قراءة سريعة قبل أي قرار</h2>
+          </div>
+          <p>صفحة بسيطة تجمع السعر والتغيّر والاتجاه، دون ما يشتّت انتباهك عن الرقم الذي تبحث عنه.</p>
+        </div>
+        <div class="feature-grid">
+          <div class="feature">
+            <svg class="feature-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M6 20V14a10 10 0 0 1 20 0v6l3 4H3l3-4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M13 27a3 3 0 0 0 6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <h3>تنبيه عند الوصول</h3>
+            <p>حدّد سعراً تتابعه، وصل إليك تنبيه عندما يبلغه العيار الذي تختاره.</p>
+          </div>
+          <div class="feature">
+            <svg class="feature-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M4 25h24M7 20l6-7 5 4 7-11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 6h5v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3>اتجاه الأسبوع</h3>
+            <p>رسم مختصر يوضّح هل السعر مرتفع أم منخفض مقارنة بالأيام الماضية.</p>
+          </div>
+          <div class="feature">
+            <svg class="feature-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M16 4v24M8 9h16M5 23h22" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="m16 9 7 10H9l7-10Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            </svg>
+            <h3>مقارنة الأعيرة</h3>
+            <p>انتقل بين عيار ٢٤ و٢١ و١٨ و١٤ في لمسة واحدة، مع فروق واضحة في السعر.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="alerts" id="alerts" aria-labelledby="alerts-title">
+      <div class="wrap">
+        <div class="alert-panel">
+          <div>
+            <span class="kicker">تجربة العرض</span>
+            <h2 id="alerts-title">اجعل سعر الذهب أمام عينيك</h2>
+            <p>جرّب خطوة تفعيل التنبيه هنا. هذه نسخة توضيحية لا ترسل بيانات ولا تتصل بأي خدمة.</p>
+          </div>
+          <div>
+            <form class="alert-form" id="alert-form">
+              <label class="skip" for="alert-email">البريد الإلكتروني</label>
+              <input id="alert-email" name="email" type="email" placeholder="بريدك الإلكتروني" autocomplete="email" required>
+              <button type="submit">فعّل التنبيه</button>
+            </form>
+            <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap foot-inner">
+      <span class="foot-brand">مِعيار</span>
+      <span>جميع الأرقام والتغيّرات في هذه الصفحة توضيحية لأغراض العرض فقط.</span>
+      <span>نسخة ثابتة · لا تحتاج إلى حساب</span>
+    </div>
+  </footer>
+
+  <script>
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeRoot = document.documentElement;
+
+    function setTheme(theme) {
+      themeRoot.setAttribute('data-theme', theme);
+      themeToggle.setAttribute('aria-pressed', String(theme === 'light'));
+      try {
+        localStorage.setItem('miyaar-theme', theme);
+      } catch (error) {
+        return;
+      }
+    }
+
+    setTheme(themeRoot.getAttribute('data-theme') || 'dark');
+    themeToggle.addEventListener('click', () => {
+      setTheme(themeRoot.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    });
+
+    const series = {
+      '24': [56, 61, 58, 66, 63, 72, 78],
+      '21': [58, 54, 62, 60, 69, 67, 76],
+      '18': [60, 57, 63, 61, 68, 65, 73],
+      '14': [62, 59, 64, 60, 67, 66, 71]
+    };
+
+    const priceValue = document.getElementById('price-value');
+    const activeKarat = document.getElementById('active-karat');
+    const priceChange = document.getElementById('price-change');
+    const chartLine = document.getElementById('chart-line');
+    const chartArea = document.getElementById('chart-area');
+    const chartDot = document.getElementById('chart-dot');
+    const rows = Array.from(document.querySelectorAll('.karat-row'));
+
+    function drawChart(values) {
+      const points = values.map((v, i) => [i * 100, 130 - v]);
+      const line = points.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ');
+      const last = points[points.length - 1];
+      chartLine.setAttribute('d', line);
+      chartArea.setAttribute('d', line + ' L600 150 L0 150 Z');
+      chartDot.setAttribute('cx', last[0]);
+      chartDot.setAttribute('cy', last[1]);
+    }
+
+    function selectKarat(row) {
+      rows.forEach(item => item.setAttribute('aria-pressed', String(item === row)));
+      activeKarat.textContent = 'عيار ' + row.dataset.label + ' · سعر الغرام';
+      priceValue.textContent = row.dataset.price;
+      priceChange.textContent = row.dataset.change;
+      drawChart(series[row.dataset.karat]);
+    }
+
+    rows.forEach(row => row.addEventListener('click', () => selectKarat(row)));
+    drawChart(series['21']);
+
+    const form = document.getElementById('alert-form');
+    const note = document.getElementById('form-note');
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      note.textContent = 'تم تسجيل طلب تجريبي — لم تُرسل أي بيانات.';
+      form.reset();
+    });
+  </script>
+</body>
+</html>
