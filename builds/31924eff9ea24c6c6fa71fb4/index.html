@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiny To-Do</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --muted: #8a90a0;
+    --line: #e6e8ee;
+    --accent: #4f6ef7;
+    --accent-soft: #eef1ff;
+    --danger: #e05a63;
+    --shadow: 0 10px 30px rgba(31, 36, 48, 0.07);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: clamp(24px, 6vw, 72px) 16px;
+  }
+  .app {
+    width: 100%;
+    max-width: 520px;
+  }
+  header { margin-bottom: 24px; }
+  h1 {
+    font-size: clamp(28px, 6vw, 38px);
+    letter-spacing: -0.03em;
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  .subtitle { margin: 0; color: var(--muted); font-size: 15px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .entry {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input[type="text"]::placeholder { color: var(--muted); }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 0;
+    border-radius: 10px;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+  }
+  button:active { transform: scale(0.96); }
+  .add {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 20px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .add:hover { background: #3d5ae6; }
+  ul { list-style: none; margin: 0; padding: 6px; }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+  li + li { margin-top: 2px; }
+  li:hover { background: var(--bg); }
+  .check {
+    appearance: none;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #c9cedb;
+    border-radius: 7px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .check:hover { border-color: var(--accent); }
+  .check:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check:checked::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .label {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+  li.done .label { color: var(--muted); text-decoration: line-through; }
+  .delete {
+    flex: none;
+    background: transparent;
+    color: var(--muted);
+    width: 30px;
+    height: 30px;
+    font-size: 20px;
+    line-height: 1;
+    border-radius: 8px;
+  }
+  .delete:hover { background: #fdecee; color: var(--danger); }
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .clear {
+    background: transparent;
+    color: var(--muted);
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .clear:hover { color: var(--danger); }
+  @media (max-width: 420px) {
+    .entry { flex-wrap: wrap; }
+    .add { width: 100%; padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>To-Do</h1>
+    <p class="subtitle">A little list for the things on your mind.</p>
+  </header>
+  <section class="card">
+    <form class="entry" id="form">
+      <input id="input" type="text" placeholder="Add a task..." maxlength="200" autocomplete="off" aria-label="New task">
+      <button class="add" type="submit">Add</button>
+    </form>
+    <ul id="list"></ul>
+    <footer>
+      <span id="count">0 tasks left</span>
+      <button class="clear" id="clear" type="button">Clear completed</button>
+    </footer>
+  </section>
+</main>
+<script>
+  var form = document.getElementById('form');
+  var input = document.getElementById('input');
+  var list = document.getElementById('list');
+  var count = document.getElementById('count');
+  var clear = document.getElementById('clear');
+  var tasks = [];
+
+  function render() {
+    list.innerHTML = '';
+    if (tasks.length === 0) {
+      var empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = 'Nothing here yet. Add your first task above.';
+      list.appendChild(empty);
+    }
+    tasks.forEach(function(task, index) {
+      var li = document.createElement('li');
+      if (task.done) li.className = 'done';
+
+      var check = document.createElement('input');
+      check.type = 'checkbox';
+      check.className = 'check';
+      check.checked = task.done;
+      check.setAttribute('aria-label', 'Toggle ' + task.text);
+      check.addEventListener('change', function() {
+        tasks[index].done = check.checked;
+        render();
+      });
+
+      var label = document.createElement('label');
+      label.className = 'label';
+      label.textContent = task.text;
+
+      var remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'delete';
+      remove.textContent = '\u00d7';
+      remove.setAttribute('aria-label', 'Delete ' + task.text);
+      remove.addEventListener('click', function() {
+        tasks.splice(index, 1);
+        render();
+      });
+
+      li.appendChild(check);
+      li.appendChild(label);
+      li.appendChild(remove);
+      list.appendChild(li);
+    });
+
+    var left = tasks.filter(function(task) { return !task.done; }).length;
+    count.textContent = left + (left === 1 ? ' task left' : ' tasks left');
+    clear.disabled = tasks.every(function(task) { return !task.done; });
+    clear.style.opacity = clear.disabled ? '0.4' : '1';
+  }
+
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    var text = input.value.trim();
+    if (!text) return;
+    tasks.push({ text: text, done: false });
+    input.value = '';
+    render();
+    input.focus();
+  });
+
+  clear.addEventListener('click', function() {
+    tasks = tasks.filter(function(task) { return !task.done; });
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
