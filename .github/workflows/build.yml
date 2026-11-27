@@ -53,7 +53,7 @@ jobs:
           [ -s /tmp/order.txt ] || echo big-pickle > /tmp/order.txt
           while read -r M; do
             echo "trying $M"
-            timeout 360 opencode run -m "opencode/$M" "Build a small static website or app in the current directory. Requirements: create index.html as the entry point (other static files like css/js are fine), self-contained, no server, no API keys, no secrets, responsive. When finished, reply with one short sentence describing what you built. ${PRE}$PROMPT" || true
+            timeout 360 opencode run -m "opencode/$M" "First load and follow the skills frontend-design and verification-before-completion with the skill tool. Build a small static website or app in the current directory. Requirements: create index.html as the entry point (other static files like css/js are fine), self-contained, no server, no API keys, no secrets, responsive. Before finishing, re-read index.html and confirm it is complete HTML with no placeholder or lorem ipsum text. When finished, reply with one short sentence describing what you built. ${PRE}$PROMPT" || true
             [ -f index.html ] && [ "$(md5sum < index.html)" != "$H0" ] && { echo "done with $M"; break; }
           done < /tmp/order.txt
           rm -rf .git
